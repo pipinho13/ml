@@ -2,6 +2,9 @@
 title: "PA Machine Learning"
 
 ---
+### The project on html format
+http://rpubs.com/pipinho13/125600
+
 ### Background
 
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity 
