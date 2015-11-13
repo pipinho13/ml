@@ -84,7 +84,6 @@ At the point we run Cross Validation in order to find the most important variabl
 ```{r}
 result <- rfcv(training[,-ncol(training)], training[,c("classe")])
 
-qplot(classe, yaw_belt,   color=classe, data=trainingfinalcols)
 ```
 
 ### We keep the 3 most important variables
