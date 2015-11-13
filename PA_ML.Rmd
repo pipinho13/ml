@@ -1,0 +1,119 @@
+---
+title: "PA Machine Learning"
+
+---
+### Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity 
+relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements 
+about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. 
+One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. 
+They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+### Data
+
+Data 
+
+
+The training data for this project are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. 
+
+
+### Goal
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. 
+You will also use your prediction model to predict 20 different test cases. 
+
+
+### Libraries used
+
+```{r, message=F, warning=F }
+library(randomForest)
+library(ggplot2)
+library(caret)
+```
+
+### Synopsis
+
+Our goal is to build a model which can predict the "Classe" of each user based on some measurents. 
+For this scope we will use the Cross Validation and the Random Forest algorithms
+
+
+### Load data (treating empty values as NA and also the #DIV/0! )
+
+```{r}
+train<- read.csv("pml-training.csv", header=T, na.strings=c("NA","", "#DIV/0!"))
+test<- read.csv("pml-testing.csv", header=T, na.strings=c("NA","", "#DIV/0!"))
+### Subset NA to 0
+train[is.na(train)] <- 0
+```
+
+Then we xclude variables with extremely low variance and also the first 6 columns which do not provide us any relevant info
+```{r}
+nsv <- nearZeroVar(train[,-(1:6)],saveMetrics=TRUE)
+
+train<-train[,rownames(subset(nsv, nzv==FALSE))]
+```
+
+
+### New subsets
+
+For our purposes we create a new subset of training and testing data
+
+```{r}
+inTrain <- createDataPartition(y=train$classe, p=0.75, list=FALSE)
+training <- train[inTrain, ]
+testing <- train[-inTrain, ]
+```
+
+
+
+
+
+###Pick the most explanatory variables
+
+At the point we run Cross Validation in order to find the most important variables
+```{r}
+result <- rfcv(training[,-ncol(training)], training[,c("classe")])
+
+qplot(classe, yaw_belt,   color=classe, data=trainingfinalcols)
+```
+
+### We keep the 3 most important variables
+
+```{r}
+fitRf <- randomForest(classe ~ ., data=training, importantce=TRUE)
+finalcols<-c(rownames(as.data.frame((fitRf$importance[order(fitRf$importance, decreasing=TRUE),][1:3]))), "classe")
+```
+
+### We run the model again by keeping the three most important variables
+
+```{r}
+trainingfinalcols <- training[, finalcols]
+fitRfv2 <- randomForest(classe ~ ., data=trainingfinalcols, importance=TRUE)
+fitRfv2$confusion
+```
+
+
+### We calculate the Error Rate of the model which is around 0.38%
+```{r}
+pred2 <- predict(fitRfv2, testing)
+table(pred2, testing$classe)
+
+err_rate <- length(pred2[!pred2==testing$classe])/nrow(testing)
+err_rate
+```
+
+### A plot of the variables that we kept
+
+```{r}
+qplot(num_window, roll_belt,   size=yaw_belt, color=classe, data=trainingfinalcols)
+```
